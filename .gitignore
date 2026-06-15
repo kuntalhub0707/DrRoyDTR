@@ -1,0 +1,47 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ---- Virtual environment (large; recreate with requirements.txt) ----
+venv/
+env/
+.venv/
+
+# ---- Build / packaging output (large; regenerated) ----
+build/
+dist/
+package/
+installer/
+*.spec
+
+# ---- AI model weights (downloaded automatically; large) ----
+*.pt
+*.onnx
+*.engine
+
+# ---- App data (user-generated at runtime) ----
+output/*
+!output/.gitkeep
+reports/*
+!reports/.gitkeep
+datasets/*
+!datasets/.gitkeep
+models/*
+!models/.gitkeep
+app_settings.json
+model_settings.json
+datasets.json
+training_history.json
+colab_sessions.json
+
+# ---- SECRETS — never commit ----
+client_secret.json
+client_secret*.json
+gdrive_token.json
+*_token.json
+
+# ---- Logs / temp ----
+*.log
+*.tmp
