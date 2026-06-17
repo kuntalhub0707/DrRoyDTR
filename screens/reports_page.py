@@ -155,8 +155,9 @@ class ReportsPage(QWidget):
         lay.addWidget(self._heading("Report Options"))
         self.opt_image = self._toggle("Include result image", True)
         self.opt_table = self._toggle("Include detection table", True)
+        self.opt_explain = self._toggle("Include AI explanation (heatmap)", True)
         self.opt_model = self._toggle("Include AI model info", True)
-        for t in (self.opt_image, self.opt_table, self.opt_model):
+        for t in (self.opt_image, self.opt_table, self.opt_explain, self.opt_model):
             lay.addWidget(t)
 
         self.in_letter = self._line(); self.in_letter.setText(_app_default("letterhead", "Tata 1mg Diagnostic Centre"))
@@ -272,6 +273,7 @@ class ReportsPage(QWidget):
             "options": {
                 "include_image": self.opt_image.isChecked(),
                 "include_table": self.opt_table.isChecked(),
+                "include_explanation": self.opt_explain.isChecked(),
                 "include_model": self.opt_model.isChecked(),
                 "signature_line": self.opt_sign.isChecked(),
             },

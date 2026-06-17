@@ -142,6 +142,16 @@ def _build_flow(data):
             flow.append(Paragraph("Detected Findings", st["section"]))
             flow.append(_findings_table(result.get("findings", []), st))
 
+        if opts.get("include_explanation", True) and result.get("explain_image") \
+                and os.path.isfile(result["explain_image"]):
+            flow.append(Spacer(1, 6))
+            flow.append(Paragraph("AI Explanation (heatmap)", st["section"]))
+            flow.append(Paragraph(
+                "Warmer (red/yellow) areas show the regions the AI model focused on "
+                "when producing this result.", st["small"]))
+            flow.append(Spacer(1, 3))
+            flow.append(RLImage(result["explain_image"], width=110 * mm, height=110 * mm, kind="proportional"))
+
         if opts.get("include_model", True):
             flow.append(Spacer(1, 6))
             flow.append(Paragraph(

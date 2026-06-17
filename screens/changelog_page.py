@@ -27,10 +27,25 @@ APP_VERSION = "v1.0"
 # Newest release first. Each: version, date, title, tag (or ""), sections[(heading, [items])]
 RELEASES = [
     {
+        "version": "v1.1",
+        "date": "17 June 2026",
+        "title": "Explainable AI",
+        "tag": "Latest",
+        "summary": "See why the AI made each prediction.",
+        "sections": [
+            ("Explainable AI (XAI)", [
+                "New 'Explain' button on the Predict page generates a heatmap showing which "
+                "areas of a slide the model focused on (EigenCAM)",
+                "Works for every model — detection and classification — fully offline",
+                "Heatmaps can be included in clinical PDF reports",
+            ]),
+        ],
+    },
+    {
         "version": "v1.0",
         "date": "12 June 2026",
         "title": "First release",
-        "tag": "Latest",
+        "tag": "",
         "summary": "The complete desktop pathology AI workflow — train, predict, report, "
                    "and offload heavy training to a free cloud GPU.",
         "sections": [

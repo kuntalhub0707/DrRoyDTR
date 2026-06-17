@@ -28,6 +28,8 @@ reports — entirely offline, with optional free cloud-GPU training via Google C
   plus your own trained/imported models; set a default for prediction.
 - **Predict / Analyze** — single-image or whole-folder inference, with detection
   boxes, findings tables, and PDF / CSV / XLSX export.
+- **Explainable AI (XAI)** — one-click EigenCAM heatmaps showing *which regions*
+  the model focused on; works offline for every model and can be embedded in reports.
 - **Reports & Export** — clinical PDF reports with a live preview, patient details,
   and your own letterhead.
 - **Settings** — report and training defaults, plus timezone.

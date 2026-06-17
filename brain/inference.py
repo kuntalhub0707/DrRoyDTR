@@ -180,3 +180,21 @@ class BatchInferenceWorker(QThread):
         except Exception as e:
             import traceback
             self.failed.emit(f"{e}\n{traceback.format_exc()}")
+
+
+class ExplainWorker(QThread):
+    """Generate an Explainable-AI (EigenCAM) heatmap on a background thread."""
+    done = pyqtSignal(str)      # path to heatmap overlay PNG
+    failed = pyqtSignal(str)
+
+    def __init__(self, model_file, image_path):
+        super().__init__()
+        self.model_file = model_file
+        self.image_path = image_path
+
+    def run(self):
+        import brain.explain as explain
+        try:
+            self.done.emit(explain.explain_image(self.model_file, self.image_path))
+        except Exception as e:
+            self.failed.emit(str(e))

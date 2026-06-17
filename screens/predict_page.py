@@ -117,6 +117,7 @@ class PredictPage(QWidget):
         self.folder_mode = False
         self.input_path = ""
         self.worker = None
+        self._explain_worker = None
         self.last_result = None
         self._model_items = []
         self.setStyleSheet(f"background: {C_BG};")
@@ -442,6 +443,12 @@ class PredictPage(QWidget):
             img.setStyleSheet(f"border: 1px solid {C_BORDER}; border-radius: 10px; background: {C_PANEL2}; padding: 6px;")
             self.result_lay.addWidget(img, 0, Qt.AlignHCenter)
 
+        # holder where the Explainable-AI heatmap appears (filled on demand)
+        self.explain_holder = QWidget(); self.explain_holder.setStyleSheet("background: transparent;")
+        self.explain_box = QVBoxLayout(self.explain_holder)
+        self.explain_box.setContentsMargins(0, 0, 0, 0); self.explain_box.setSpacing(6)
+        self.result_lay.addWidget(self.explain_holder)
+
         table = QTableWidget(0, 3)
         table.setHorizontalHeaderLabels(["Class", "Count", "Avg Confidence"])
         self._style_table(table)
@@ -461,16 +468,87 @@ class PredictPage(QWidget):
         self.result_lay.addWidget(meta)
 
         actions = QHBoxLayout(); actions.setSpacing(8)
+        self.btn_explain = QPushButton("🔍  Explain (AI heatmap)")
         b_img = QPushButton("Save Image"); b_pdf = QPushButton("Export PDF Report")
-        for b in (b_img, b_pdf):
+        for b in (self.btn_explain, b_img, b_pdf):
             b.setCursor(Qt.PointingHandCursor); b.setMinimumHeight(38)
+        self.btn_explain.setStyleSheet(self._action_qss())
         b_img.setStyleSheet(self._action_qss()); b_pdf.setStyleSheet(self._action_qss(primary=True))
+        self.btn_explain.clicked.connect(self._on_explain)
         b_img.clicked.connect(self._save_image)
         b_pdf.clicked.connect(self._export_pdf)
-        actions.addWidget(b_img); actions.addWidget(b_pdf); actions.addStretch(1)
+        actions.addWidget(self.btn_explain); actions.addWidget(b_img); actions.addWidget(b_pdf); actions.addStretch(1)
         wrap = QWidget(); wrap.setLayout(actions); wrap.setStyleSheet("background: transparent;")
         self.result_lay.addWidget(wrap)
         self.result_lay.addStretch(1)
+
+    # ---- Explainable AI ----
+    def _on_explain(self):
+        if not self.last_result or self._explain_worker is not None:
+            return
+        model_file = self.last_result.get("model")
+        image_path = self.last_result.get("image_path")
+        if not model_file or not image_path or not os.path.isfile(image_path):
+            self.lbl_status.setText("Run a prediction on an image first.")
+            return
+        self.btn_explain.setEnabled(False)
+        self.btn_explain.setText("Generating heatmap…")
+        self.lbl_status.setText("Generating AI explanation…")
+        from brain.inference import ExplainWorker
+        self._explain_worker = ExplainWorker(model_file, image_path)
+        self._explain_worker.done.connect(self._on_explain_done)
+        self._explain_worker.failed.connect(self._on_explain_failed)
+        self._explain_worker.start()
+
+    def _on_explain_done(self, path):
+        self._explain_worker = None
+        self.btn_explain.setEnabled(True)
+        self.btn_explain.setText("🔍  Explain (AI heatmap)")
+        self.lbl_status.setText("AI explanation ready.")
+        # remember it so the PDF report can include it
+        if self.last_result is not None:
+            self.last_result["explain_image"] = path
+            self._save_explain_to_sidecar(path)
+        # display the heatmap under the result image
+        while self.explain_box.count():
+            it = self.explain_box.takeAt(0); w = it.widget()
+            if w: w.setParent(None); w.deleteLater()
+        cap = QLabel("AI explanation — warmer (red/yellow) areas are what the model focused on:")
+        cap.setWordWrap(True)
+        cap.setStyleSheet(f"color: {C_TEXT_DIM}; font-size: 12px;")
+        self.explain_box.addWidget(cap)
+        img = QLabel(); img.setAlignment(Qt.AlignCenter)
+        pix = QPixmap(path)
+        if pix.width() > 620:
+            pix = pix.scaledToWidth(620, Qt.SmoothTransformation)
+        img.setPixmap(pix)
+        img.setStyleSheet(f"border: 1px solid {C_BLUE}; border-radius: 10px; background: {C_PANEL2}; padding: 6px;")
+        self.explain_box.addWidget(img, 0, Qt.AlignHCenter)
+        if self.status_callback:
+            self.status_callback("AI explanation (heatmap) generated")
+
+    def _on_explain_failed(self, msg):
+        self._explain_worker = None
+        self.btn_explain.setEnabled(True)
+        self.btn_explain.setText("🔍  Explain (AI heatmap)")
+        self.lbl_status.setText("⚠ Could not generate explanation: " + (msg.splitlines()[0] if msg else "error"))
+
+    def _save_explain_to_sidecar(self, path):
+        """Add the heatmap path to this prediction's result_*.json so Reports can use it."""
+        import json
+        ts = self.last_result.get("timestamp")
+        if not ts:
+            return
+        side = os.path.join(APP_ROOT, "output", "predictions", f"result_{ts}.json")
+        try:
+            if os.path.isfile(side):
+                with open(side, "r", encoding="utf-8") as fh:
+                    rec = json.load(fh)
+                rec["explain_image"] = path
+                with open(side, "w", encoding="utf-8") as fh:
+                    json.dump(rec, fh, indent=2)
+        except Exception:
+            pass
 
     # ---- batch ----
     def _on_batch_progress(self, d):

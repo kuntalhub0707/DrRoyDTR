@@ -4,7 +4,7 @@
 
 #define MyAppName "Dr. Roy Data Training & Reporting"
 #define MyAppShortName "DrRoyDTR"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Dr. Kuntal Roy"
 
 [Setup]
